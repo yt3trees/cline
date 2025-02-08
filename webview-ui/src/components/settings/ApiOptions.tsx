@@ -80,6 +80,7 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 	const [vsCodeLmModels, setVsCodeLmModels] = useState<vscodemodels.LanguageModelChatSelector[]>([])
 	const [anthropicBaseUrlSelected, setAnthropicBaseUrlSelected] = useState(!!apiConfiguration?.anthropicBaseUrl)
 	const [azureApiVersionSelected, setAzureApiVersionSelected] = useState(!!apiConfiguration?.azureApiVersion)
+	const [isReasoningModelSelected, setisReasoningModelSelected] = useState(!!apiConfiguration?.isReasoningModel)
 	const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
 	const handleInputChange = (field: keyof ApiConfiguration) => (event: any) => {
@@ -696,6 +697,18 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 							placeholder={`Default: ${azureOpenAiDefaultApiVersion}`}
 						/>
 					)}
+					<VSCodeCheckbox
+						checked={isReasoningModelSelected}
+						onChange={(e: any) => {
+							const isChecked = e.target.checked === true
+							setisReasoningModelSelected(isChecked)
+							setApiConfiguration({
+								...apiConfiguration,
+								isReasoningModel: isChecked,
+							})
+						}}>
+						Use Reasoning Model
+					</VSCodeCheckbox>
 					<p
 						style={{
 							fontSize: "12px",
