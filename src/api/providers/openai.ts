@@ -7,6 +7,7 @@ import { convertToOpenAiMessages } from "../transform/openai-format"
 import { ApiStream } from "../transform/stream"
 import { convertToR1Format } from "../transform/r1-format"
 import { ChatCompletionReasoningEffort } from "openai/resources/chat/completions.mjs"
+import { ApiStreamChunk } from "../transform/stream"
 
 export class OpenAiHandler implements ApiHandler {
 	private options: ApiHandlerOptions
@@ -43,10 +44,47 @@ export class OpenAiHandler implements ApiHandler {
 		}
 	}
 
+	private processAzureDeepseekContent(
+		content: string,
+		inReasoning: boolean,
+	): { events: ApiStreamChunk[]; inReasoning: boolean } {
+		const openTag = "<think>"
+		const closeTag = "</think>"
+		const events: ApiStreamChunk[] = []
+
+		if (content.includes(openTag)) {
+			const parts = content.split(openTag)
+			inReasoning = true
+			if (parts.length > 1 && parts[1].length > 0) {
+				events.push({ type: "reasoning", reasoning: parts[1] })
+			}
+		} else if (content.includes(closeTag)) {
+			const parts = content.split(closeTag)
+			if (parts.length > 0 && parts[0].length > 0) {
+				events.push({ type: "reasoning", reasoning: parts[0] })
+			}
+			inReasoning = false
+			if (parts.length > 1 && parts[1].length > 0) {
+				events.push({ type: "text", text: parts[1] })
+			}
+		} else {
+			if (inReasoning) {
+				events.push({ type: "reasoning", reasoning: content })
+			} else {
+				events.push({ type: "text", text: content })
+			}
+		}
+
+		return { events, inReasoning }
+	}
+
 	@withRetry()
 	async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelId = this.options.openAiModelId ?? ""
 		const isDeepseekReasoner = modelId.includes("deepseek-reasoner") || modelId.includes("deepseek-r1")
+		const isAzureDeepseek =
+			(this.options.azureApiVersion || this.options.openAiBaseUrl?.toLowerCase().includes("azure.com")) &&
+			isDeepseekReasoner
 		const isO3Mini = modelId.includes("o3-mini")
 
 		let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -74,12 +112,19 @@ export class OpenAiHandler implements ApiHandler {
 			stream: true,
 			stream_options: { include_usage: true },
 		})
+
+		let inReasoning = false
 		for await (const chunk of stream) {
 			const delta = chunk.choices[0]?.delta
 			if (delta?.content) {
-				yield {
-					type: "text",
-					text: delta.content,
+				if (isAzureDeepseek) {
+					const result = this.processAzureDeepseekContent(delta.content, inReasoning)
+					inReasoning = result.inReasoning
+					for (const event of result.events) {
+						yield event
+					}
+				} else {
+					yield { type: "text", text: delta.content }
 				}
 			}
 
