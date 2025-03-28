@@ -1028,19 +1028,13 @@ const ApiOptions = ({ showModelOptions, apiErrorMessage, modelIdErrorMessage, is
 								Supports Computer Use
 							</VSCodeCheckbox>
 							<VSCodeCheckbox
-								checked={!!apiConfiguration?.openAiModelInfo?.isR1FormatRequired}
-								onChange={(e: any) => {
-									const isChecked = e.target.checked === true
-									let modelInfo = apiConfiguration?.openAiModelInfo
-										? apiConfiguration.openAiModelInfo
-										: { ...openAiModelInfoSaneDefaults }
-									modelInfo = { ...modelInfo, isR1FormatRequired: isChecked }
-
-									setApiConfiguration({
-										...apiConfiguration,
-										openAiModelInfo: modelInfo,
-									})
-								}}>
+								checked={
+									(apiConfiguration?.openAiConfigs &&
+										apiConfiguration.openAiConfigs[apiConfiguration.openAiSelectedConfigIndex ?? 0]
+											?.openAiModelInfo?.isR1FormatRequired) ||
+									false
+								}
+								onChange={handleOpenAiChange("isR1FormatRequired", true)}>
 								Enable R1 messages format
 							</VSCodeCheckbox>
 							<div style={{ display: "flex", gap: 10, marginTop: "5px" }}>
