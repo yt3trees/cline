@@ -85,7 +85,7 @@ export interface WebviewMessage {
 
 	// For toggleToolAutoApprove
 	serverName?: string
-	toolName?: string
+	toolNames?: string[]
 	autoApprove?: boolean
 
 	// For auth
