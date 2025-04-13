@@ -5,10 +5,12 @@ import { ChatSettings } from "./ChatSettings"
 import { UserInfo } from "./UserInfo"
 import { ChatContent } from "./ChatContent"
 import { TelemetrySetting } from "./TelemetrySetting"
+import { McpViewTab } from "./mcp"
 import { MemoryBankSettings } from "./MemoryBankSettings"
 
 export interface WebviewMessage {
 	type:
+		| "addRemoteServer"
 		| "apiConfiguration"
 		| "webviewDidLaunch"
 		| "newTask"
@@ -29,12 +31,17 @@ export interface WebviewMessage {
 		| "openMention"
 		| "cancelTask"
 		| "refreshOpenRouterModels"
+		| "refreshRequestyModels"
 		| "refreshOpenAiModels"
 		| "openMcpSettings"
 		| "restartMcpServer"
 		| "deleteMcpServer"
 		| "autoApprovalSettings"
 		| "browserSettings"
+		| "discoverBrowser"
+		| "testBrowserConnection"
+		| "browserConnectionResult"
+		| "browserRelaunchResult"
 		| "togglePlanActMode"
 		| "checkpointDiff"
 		| "checkpointRestore"
@@ -67,8 +74,18 @@ export interface WebviewMessage {
 		| "fetchUserCreditsData"
 		| "optionsResponse"
 		| "requestTotalTasksSize"
+		| "relaunchChromeDebugMode"
+		| "taskFeedback"
+		| "getBrowserConnectionInfo"
+		| "getDetectedChromePath"
+		| "detectedChromePath"
+		| "scrollToSettings"
+		| "getRelativePaths" // Handles single and multiple URI resolution
+		| "searchFiles"
+		| "toggleFavoriteModel"
 	// | "relaunchChromeDebugMode"
 	text?: string
+	uris?: string[] // Used for getRelativePaths
 	disabled?: boolean
 	askResponse?: ClineAskResponse
 	apiConfiguration?: ApiConfiguration
@@ -81,10 +98,12 @@ export interface WebviewMessage {
 	chatContent?: ChatContent
 	mcpId?: string
 	timeout?: number
+	tab?: McpViewTab
 	memoryBankSettings?: MemoryBankSettings
 
 	// For toggleToolAutoApprove
 	serverName?: string
+	serverUrl?: string
 	toolNames?: string[]
 	autoApprove?: boolean
 
@@ -96,8 +115,16 @@ export interface WebviewMessage {
 	planActSeparateModelsSetting?: boolean
 	telemetrySetting?: TelemetrySetting
 	customInstructionsSetting?: string
+	// For task feedback
+	feedbackType?: TaskFeedbackType
+	mentionsRequestId?: string
+	query?: string
+	// For toggleFavoriteModel
+	modelId?: string
 }
 
 export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse"
 
 export type ClineCheckpointRestore = "task" | "workspace" | "taskAndWorkspace"
+
+export type TaskFeedbackType = "thumbs_up" | "thumbs_down"
